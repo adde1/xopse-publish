@@ -18,7 +18,8 @@ particularly when its models are not complemented by explicit interface
 specifications and deliberate allocation of security requirements across
 subsystems.&lt;/p&gt;
 &lt;h2 data-hextra-search-id="the-problem"&gt;The problem&lt;span class="hx:absolute hx:-mt-20" id="the-problem"&gt;&lt;/span&gt;
-&lt;a href="#the-problem" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Describing what must be true is not enough. “Protect sensitive data” and
+&lt;a href="#the-problem" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;In a large IT environment, describing what must be true is not enough.
+“Protect sensitive data” and
 “ensure auditability” must become concrete obligations. Architecture must
 show where they are fulfilled, who is responsible and what evidence
 demonstrates fulfilment.&lt;/p&gt;
