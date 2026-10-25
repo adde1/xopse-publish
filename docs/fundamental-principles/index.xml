@@ -1,0 +1,297 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>XOP.SE – Fundamental Principles of System Architecture</title><link>https://xop.se/fundamental-principles/</link><description>Recent content in Fundamental Principles of System Architecture on XOP.SE</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><atom:link href="https://xop.se/fundamental-principles/index.xml" rel="self" type="application/rss+xml"/><item><title>Fundamental Principles of System Architecture</title><link>https://xop.se/fundamental-principles/fundamental-principles-manuscript/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://xop.se/fundamental-principles/fundamental-principles-manuscript/</guid><description>
+&lt;h2 data-hextra-search-id="the-problem-system-architecture-solves"&gt;The Problem System Architecture Solves&lt;span class="hx:absolute hx:-mt-20" id="the-problem-system-architecture-solves"&gt;&lt;/span&gt;
+&lt;a href="#the-problem-system-architecture-solves" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;You know the story: users keep pulling your system in different
+directions. Some want new functionality. Others want different
+functionality. Some just want stability.&lt;/p&gt;
+&lt;p&gt;Every large system that needs to keep changing eventually runs
+into the same problem: how do we change one part without breaking
+another?&lt;/p&gt;
+&lt;p&gt;Dependencies make the system too complex for one person. Teams
+help, but humans do not coordinate too easily in large groups.&lt;/p&gt;
+&lt;p&gt;Over time, engineers have developed a set of core principles to
+manage this:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;coupling and cohesion&lt;/li&gt;
+&lt;li&gt;interfaces&lt;/li&gt;
+&lt;li&gt;composition&lt;/li&gt;
+&lt;li&gt;branching&lt;/li&gt;
+&lt;li&gt;compatibility&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;These principles are not arbitrary. This article traces how
+they emerge from the problem itself, and why they appear again
+and again across engineering disciplines.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="why-dependencies-make-engineering-hard"&gt;Why Dependencies make Engineering Hard&lt;span class="hx:absolute hx:-mt-20" id="why-dependencies-make-engineering-hard"&gt;&lt;/span&gt;
+&lt;a href="#why-dependencies-make-engineering-hard" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Why are systems so expensive to create? And, what is software anyway?&lt;/p&gt;
+&lt;p&gt;Software is information—instructions to a computer. For the purpose
+of this series, we&amp;rsquo;ll consider software as created by a human and
+expressed in a formal language such as C, Java, or Python.&lt;/p&gt;
+&lt;p&gt;What makes software challenging is the abundance of dependencies.
+A dependency occurs wherever one piece of code relies on another
+for its proper operation. For example, when a function calls another
+function, or when a member in a struct is referenced.&lt;/p&gt;
+&lt;p&gt;And there are a lot of dependencies.&lt;/p&gt;
+&lt;p&gt;Errors and changes manifest along these lines of dependencies.
+Introducing a modification can easily lead to an error if not all
+dependencies are taken into account. As these dependencies cascade,
+the task becomes increasingly challenging for larger systems.&lt;/p&gt;
+&lt;p&gt;This challenge is not unique to software engineering; other fields,
+like Electrical Engineering, also grapple with numerous dependencies.
+Mitigating includes prototyping and testing which is time-consuming
+and therefor expensive.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="coupling-and-cohesion"&gt;Coupling and Cohesion&lt;span class="hx:absolute hx:-mt-20" id="coupling-and-cohesion"&gt;&lt;/span&gt;
+&lt;a href="#coupling-and-cohesion" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Coupling and cohesion are about managing complexity by grouping code
+that is highly interdependent, while at the same time having as few
+dependencies between the groups as possible.&lt;/p&gt;
+&lt;p&gt;When a group has only code that is highly interdependent cohesion
+is high, and when there are few dependencies between groups, coupling
+is low.&lt;/p&gt;
+&lt;p&gt;Errors and changes manifest along these lines of dependencies.
+Problem-solving is faster and easier when problems are subdivided,
+and also humans understand by grouping things.&lt;/p&gt;
+&lt;p&gt;In their 1974 paper “Structured Design” Stevens, Myers, and
+Constantine emphasise that coupling and cohesion are at odds, and
+that there is a sweet spot in between.&lt;/p&gt;
+&lt;p&gt;Try to minimise coupling, and the groups become larger, but now
+with heaps of superficially related code. This does not aid
+problem-solving.&lt;/p&gt;
+&lt;p&gt;Try to maximise cohesion, and the groups become smaller, but with
+more interdependencies until there is effectively no subdivision
+anymore—also not aiding problem-solving.&lt;/p&gt;
+&lt;p&gt;Finding the right balance takes practice and refactoring, a lot
+of refactoring.&lt;/p&gt;
+&lt;p&gt;In short, coupling and cohesion lead to grouping of code in a way
+that facilitates problem-solving and understanding.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="multiple-teams-and-scale"&gt;Multiple Teams and Scale&lt;span class="hx:absolute hx:-mt-20" id="multiple-teams-and-scale"&gt;&lt;/span&gt;
+&lt;a href="#multiple-teams-and-scale" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;The emerging pattern that comes from coupling and cohesion is
+recursive and repeats itself at different scales:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;functions are grouped into modules or classes&lt;/li&gt;
+&lt;li&gt;modules or classes into libraries or systems&lt;/li&gt;
+&lt;li&gt;systems are grouped into larger systems&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;At each level, it&amp;rsquo;s important for coupling to be low between groups
+and cohesion to be high within groups.
+From this point onwards, I will refer to a group of code as a
+&lt;em&gt;component&lt;/em&gt;. Please keep in mind that different constructs are used
+at various scales.&lt;/p&gt;
+&lt;p&gt;Humans are social beings and tend to work best in teams of around
+3 to 7 people. At a certain scale, a team is typically assigned
+to develop and maintain a component.
+Members of one team must trust that other teams do not alter the
+nature of dependencies in an uncontrolled manner.&lt;/p&gt;
+&lt;p&gt;A software contract can be seen as an interface specification
+combined with an agreement on when and how changes are permitted.
+This leads us to the most super-hero concept in engineering:
+&lt;em&gt;the interface&lt;/em&gt;.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="interfaces"&gt;Interfaces&lt;span class="hx:absolute hx:-mt-20" id="interfaces"&gt;&lt;/span&gt;
+&lt;a href="#interfaces" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;An interface is a shared boundary across which two or more components
+exchange information. To exchange information means there is a
+dependency. An interface embodies a set of dependencies.&lt;/p&gt;
+&lt;p&gt;Because interfaces provide this abstraction, the embodiment of
+dependencies, it is possible to substitute any of the components for
+another as long as it complies with the interface.&lt;/p&gt;
+&lt;p&gt;And, the developers of component A can develop to the interface
+without knowing anything about the implementation of B; all the
+nitty gritty details of component B are abstracted away by the
+interface.&lt;/p&gt;
+&lt;p&gt;An interface inherently exists between connected components. There
+may or may not be a specification - many interfaces are
+undocumented or schema-less.&lt;/p&gt;
+&lt;p&gt;Now, the most important insight related to interfaces is this:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;component A depends on the interface (and not on B)&lt;/li&gt;
+&lt;li&gt;and at the same time component B depends on the interface (and not on A)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The interface itself does not depend on components A or B at all!&lt;/p&gt;
+&lt;p&gt;We illustrate this by drawing the interface below the components.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="the-natural-order-of-dependencies"&gt;The Natural Order of Dependencies&lt;span class="hx:absolute hx:-mt-20" id="the-natural-order-of-dependencies"&gt;&lt;/span&gt;
+&lt;a href="#the-natural-order-of-dependencies" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;For a real system there must also be something that knows about which
+implementation is used where. I will refer to this as &lt;em&gt;composition&lt;/em&gt;.&lt;/p&gt;
+&lt;p&gt;So there are effectively three levels:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;interfaces&lt;/li&gt;
+&lt;li&gt;components&lt;/li&gt;
+&lt;li&gt;composition&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Having composition separate from components enables substitution.
+It can improve cohesion, but note that it does not on its own lower
+coupling as the number and nature of dependencies are determined by
+the interfaces.&lt;/p&gt;
+&lt;p&gt;Reuse is enabled by well designed interfaces, which also imply low
+coupling.&lt;/p&gt;
+&lt;p&gt;This emergent pattern arguably represents the natural order of
+dependencies for any system composed of components. It is there
+for us to recognise, rediscover, and align our designs to.&lt;/p&gt;
+&lt;p&gt;Back when I was a junior developer, a senior colleague tried to
+teach this pattern to me. After explaining patiently for hours
+he exclaimed: “Andreas, if you don’t understand this, it is your
+problem.”&lt;/p&gt;
+&lt;p&gt;He was right.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="dependency-direction"&gt;Dependency Direction&lt;span class="hx:absolute hx:-mt-20" id="dependency-direction"&gt;&lt;/span&gt;
+&lt;a href="#dependency-direction" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Dependencies often have a direction, meaning that it is optional
+on one side, both syntactically and semantically. For example,
+in SW calling a function may be optional and for a HW connector
+a pin may be optional on the male side.&lt;/p&gt;
+&lt;p&gt;When all underlying dependencies have the same direction, the
+interface has that direction too.
+Based on the directions of the interfaces, it is possible to
+re-arrange the visualisation into a directed graph, with the
+general direction pointing down and composition vertical.&lt;/p&gt;
+&lt;p&gt;The visualisation quickly becomes busy unless interfaces are
+hidden and it is often preferred to use two views: the view to
+the left puts more emphasis on the importance of interfaces and
+reuse, while the one to the right puts more emphasis on how the
+system is organised.&lt;/p&gt;
+&lt;p&gt;If you are working in software, you might recognise this under
+the name ‘dependency inversion’. Personally I find this name
+misleading - this was always the natural way dependencies are
+organised - we just lost our ways for a while.&lt;/p&gt;
+&lt;p&gt;Having acyclic dependencies is beneficial because quality will tend
+to stabilise quicker after a change or bug-fix. Personally I find it
+is easier to grasp a system with acyclic dependencies.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="early-vs-late-binding"&gt;Early vs. Late Binding&lt;span class="hx:absolute hx:-mt-20" id="early-vs-late-binding"&gt;&lt;/span&gt;
+&lt;a href="#early-vs-late-binding" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;The composition specifies which components are used in a system.
+Somehow the components must be hooked up so that information can be
+shared across the interfaces. This is referred to as binding.&lt;/p&gt;
+&lt;p&gt;When designing a system, it is also crucial to consider binding
+time — that is, when the components are bound together — because
+there are significant trade-offs to be made.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Early or static binding, during compilation or linking, gives good
+performance as there is no look-up logic required in calls between
+components. However, it offers no flexibility to swap components
+once built.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Late or dynamic binding offers more flexibility to upgrade
+individual components. However, comes with more complicated
+distribution and the risk of dependency hell.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Networked or configurable binding, such as REST API, offers
+flexibility for distribution, scaling and upgrading parts on
+the fly. However, adds communication and configuration overhead.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;The ability to re-bind in run-time is impressive but non-trivial
+to implement. USB devices manage surprisingly well most of the time.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Note that late binding will not, on its own, lower coupling,
+as the number and nature of dependencies are determined by
+the interfaces.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="branching"&gt;Branching&lt;span class="hx:absolute hx:-mt-20" id="branching"&gt;&lt;/span&gt;
+&lt;a href="#branching" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Some users value new functionality, while others prioritise stability.
+Unfortunately, there is an inherent conflict between quality and new
+functionality because adding new features often introduces defects.&lt;/p&gt;
+&lt;p&gt;As new functionality is constantly added, the quality often suffers.
+By focusing solely on bug fixes, security patches, and support for
+new 3rd party product versions, the quality increases monotonically
+for a release.&lt;/p&gt;
+&lt;p&gt;This type of policy is relatively common and offers users a choice:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;either run with the latest and accept the risk of poor quality, or&lt;/li&gt;
+&lt;li&gt;lay back and ride in comfort of stability.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;However, fixing bugs found in older releases requires mapping them
+to newer releases, as users upgrading don’t want to encounter the
+same old bugs. This process is tedious, error-prone, and
+time-consuming. The effort grows with a lack of initial quality and
+the number of supported releases.
+Many companies limit the number of supported releases by implementing
+an end-of-life policy that compels users to upgrade.&lt;/p&gt;
+&lt;p&gt;Interface specifications typically follow a more lightweight
+branching pattern. One school of thought is that specifications,
+by definition, don’t have bugs, so there are no patch releases.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="version-variant-and-compatibility"&gt;Version, Variant and Compatibility&lt;span class="hx:absolute hx:-mt-20" id="version-variant-and-compatibility"&gt;&lt;/span&gt;
+&lt;a href="#version-variant-and-compatibility" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Not only do different users put different value on stability versus
+new functionality, they also value different functionality in
+different packaging.&lt;/p&gt;
+&lt;p&gt;The difference between a version and a variant is that newer versions
+eventually replace earlier ones, while variants are designed to live
+side by side.&lt;/p&gt;
+&lt;p&gt;The key to cost-effective variants is building them from a common
+base of components. Variability can be controlled by altering the
+composition or by unlocking features with configuration hidden from
+the user.&lt;/p&gt;
+&lt;p&gt;Deciding whether to maintain compatibility across versions is an
+important, and often difficult, decision:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;For larger systems, where each component is version-controlled and
+perhaps released separately, breaking compatibility can be a major
+headache: only certain version ranges will work together, and users
+can end up in dependency hell.&lt;/li&gt;
+&lt;li&gt;On the other hand, if compatibility is never broken, the product
+will eventually stagnate.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;An implementation is backward-compatible when it supports all
+dependencies that the previous release did, both syntactically
+and semantically.&lt;/p&gt;
+&lt;p&gt;An interface specification is backward-compatible when it is a
+superset of the previous version, with added dependencies marked
+as optional.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="architecture-for-a-system-lifetime"&gt;Architecture for a System Lifetime&lt;span class="hx:absolute hx:-mt-20" id="architecture-for-a-system-lifetime"&gt;&lt;/span&gt;
+&lt;a href="#architecture-for-a-system-lifetime" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;For a large, long-lived system, technologies may change, teams may
+come and go, components may be outsourced, but the system persists.
+The system at the end of its life may be very different from its
+first iteration.&lt;/p&gt;
+&lt;p&gt;The larger a system is and the more changes it is expected to go
+through in its lifetime, the more critical it is to understand and
+apply the principles laid out in this article.&lt;/p&gt;
+&lt;p&gt;Meaningful grouping into components is essential. Think of coupling
+and cohesion as heuristics for a grouping algorithm, qualitative in
+nature, designed to help mitigate our human limitations. Effective
+grouping requires a deep understanding of the domain and the actual
+dependencies within the system.&lt;/p&gt;
+&lt;p&gt;Knowing the interfaces is key for any component- or service-oriented
+architecture because they define the requirements for components
+and establish responsibility boundaries between teams.&lt;/p&gt;
+&lt;p&gt;Knowing how the system fits together, understanding the composition,
+is equally important. A composition can range from a simple drawing
+to the use of a dependency injection framework to the automatic
+deployment of an entire system with orchestration.&lt;/p&gt;
+&lt;p&gt;It is also critical to establish an interface specification
+inventory with good governance. Changes to interface specifications
+need to be agreed upon, documented, and communicated to prevent
+integration issues. Both the client and server sides are equal
+stakeholders, but in my experience, it works best if the server
+side holds the pen.&lt;/p&gt;
+&lt;p&gt;At their core, both the composition and the interface inventory
+are forms of communication. With a good handle on these:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;We can evolve the system step by step in a controlled,
+non-disruptive way through clever use of backward compatibility.&lt;/li&gt;
+&lt;li&gt;We can reuse components for other projects.&lt;/li&gt;
+&lt;li&gt;We can substitute components to support different needs in
+functionality and cost, for example by swapping in (or out)
+a COTS product to save time and money.&lt;/li&gt;
+&lt;li&gt;We can introduce variability in the composition on top of
+a common base of components, creating variants that serve
+different users’ needs—a cost-effective product line.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 data-hextra-search-id="why-these-principles-are-fundamental"&gt;Why these Principles are Fundamental&lt;span class="hx:absolute hx:-mt-20" id="why-these-principles-are-fundamental"&gt;&lt;/span&gt;
+&lt;a href="#why-these-principles-are-fundamental" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;In this article we have explored a number of principles, but what
+is it that makes them fundamental?&lt;/p&gt;
+&lt;p&gt;It’s because they stem from 3 universal needs:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;complexity must be managed because as humans we have a limited capacity,&lt;/li&gt;
+&lt;li&gt;as humans we tend to work best in small teams, and&lt;/li&gt;
+&lt;li&gt;users have different preferences.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;For larger systems with a high number of dependencies the pattern
+that emerges from cohesion and coupling becomes almost a natural
+law due to statistical properties, enabling us to manage complexity.&lt;/p&gt;
+&lt;p&gt;Interfaces enable us to manage dependencies and decouple complex
+problems into components that can be worked on by individuals or teams.&lt;/p&gt;
+&lt;p&gt;Branching and backward compatibility are a direct response to
+different users having different needs for functionality and stability.&lt;/p&gt;
+&lt;p&gt;All of these principles show up time and time again, across
+different scale, and across different technologies.
+In contrast, evolution seems to have little need for this type of
+concepts. If (or when) super-human intelligence ever becomes a thing,
+it will be very interesting to see how it organises what we know as
+software.&lt;/p&gt;
+&lt;p&gt;But for now, there you have it:
+fundamental principles of system architecture.&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Andreas Olsson&lt;/em&gt;&lt;/p&gt;</description></item></channel></rss>

@@ -1,0 +1,182 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>XOP.SE – Musings on Architecture</title><link>https://xop.se/musings-on-architecture/</link><description>Recent content in Musings on Architecture on XOP.SE</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><atom:link href="https://xop.se/musings-on-architecture/index.xml" rel="self" type="application/rss+xml"/><item><title>High Security / High Compliance: When Business Architecture needs a System Engineer</title><link>https://xop.se/musings-on-architecture/high-compliance-need-system-engineering/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://xop.se/musings-on-architecture/high-compliance-need-system-engineering/</guid><description>
+&lt;p&gt;&lt;em&gt;Business architecture often describes what the enterprise wants.
+System architecture explains how responsibility is decomposed,
+allocated, integrated, verified, and proven.
+High-security and high-compliance environments require both.&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;I have my roots in systems engineering. Large systems. Complex problems.
+No well-established industry patterns for breaking the problem into
+manageable chunks.
+I learned that interfaces and software contracts are fundamental to enabling teams of engineers to work independently, side by side.&lt;/p&gt;
+&lt;p&gt;Business architecture comes from another tradition. It solves a different
+set of challenges. Enterprise, domain and solution architects usually have
+the luxury of focusing on business value, processes and data because many
+technical interfaces are already defined by standards bodies or suppliers.
+Integration is often considered afterwards, with a focus on data models.&lt;/p&gt;
+&lt;p&gt;But high-security and high-compliance environments are much less forgiving.&lt;/p&gt;
+&lt;p&gt;My concern here is with business-oriented architecture in enterprise IT,
+particularly when its models are not complemented by explicit interface
+specifications and deliberate allocation of security requirements across
+subsystems.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="the-problem"&gt;The problem&lt;span class="hx:absolute hx:-mt-20" id="the-problem"&gt;&lt;/span&gt;
+&lt;a href="#the-problem" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Describing what must be true is not enough. “Protect sensitive data” and
+“ensure auditability” must become concrete obligations. Architecture must
+show where they are fulfilled, who is responsible and what evidence
+demonstrates fulfilment.&lt;/p&gt;
+&lt;p&gt;The full set of requirements applies to the system of systems as a whole.
+But passing that entire set to every subsystem does not solve the problem.
+Requirements must be broken down and deliberately allocated. Each
+subsystem must carry its share, with neither gaps between responsibilities
+nor unnecessary duplication.&lt;/p&gt;
+&lt;p&gt;Interfaces become contracts for the handover of responsibility. They
+specify what each side must fulfil, what it can rely on from the other,
+and how that handover can be verified. They are not merely connections
+for exchanging data, but boundaries for trust, control and verification.
+This is where an architecture focused on business processes and data models
+alone becomes too thin.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="what-is-business-architecture"&gt;What is Business Architecture&lt;span class="hx:absolute hx:-mt-20" id="what-is-business-architecture"&gt;&lt;/span&gt;
+&lt;a href="#what-is-business-architecture" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;Business architecture is concerned with how the enterprise works and
+how it should evolve. What capabilities does it need? Which processes,
+information and applications support them? Who owns what, and how
+should change be governed? Capability maps, process and information
+models, and roadmaps help describe the answers and guide change.&lt;/p&gt;
+&lt;h3 data-hextra-search-id="the-good"&gt;The Good&lt;span class="hx:absolute hx:-mt-20" id="the-good"&gt;&lt;/span&gt;
+&lt;a href="#the-good" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Its strength is handling organisational complexity. It gives business
+and technology teams a common language and connects technology decisions
+to business purpose. Business architecture helps prevent
+individual systems and projects from being optimised at the expense
+of the whole.&lt;/p&gt;
+&lt;p&gt;By relating capabilities, processes, applications and ownership, it
+can reveal duplication, fragmented responsibilities and gaps that are
+difficult to see from within individual projects. It provides a basis
+for deciding where to invest, what to build or buy, and which systems
+to consolidate, modernise or retire. These decisions can then form a
+coordinated roadmap rather than a collection of unrelated initiatives.&lt;/p&gt;
+&lt;h3 data-hextra-search-id="the-bad"&gt;The Bad&lt;span class="hx:absolute hx:-mt-20" id="the-bad"&gt;&lt;/span&gt;
+&lt;a href="#the-bad" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Much of enterprise IT rests on technical foundations supplied by
+standards, platforms and vendors. Networking, virtualisation, identity
+and logging can often be treated as available services rather than
+systems to be designed. The work shifts towards selecting, configuring
+and combining established building blocks.&lt;/p&gt;
+&lt;p&gt;The same applies to business applications. HR, finance and customer
+management systems arrive with predefined workflows, data models and
+interfaces. Once a product has been selected, much of its architecture
+is already fixed. Integration becomes something fitted around it, with
+attention naturally turning to data mapping and synchronisation.&lt;/p&gt;
+&lt;p&gt;This encourages a habit of treating interfaces as implementation
+details, delegated to suppliers or integration teams. The question
+becomes whether systems can exchange data, rather than what each side
+must guarantee when they do. Buying the building blocks does not settle
+the responsibilities between them.&lt;/p&gt;
+&lt;h3 data-hextra-search-id="the-ugly"&gt;The Ugly&lt;span class="hx:absolute hx:-mt-20" id="the-ugly"&gt;&lt;/span&gt;
+&lt;a href="#the-ugly" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Without clear interfaces and responsibility boundaries, compliance
+becomes difficult to prove. The architecture may describe the processes
+and applications involved, yet leave unanswered which requirements each
+subsystem must fulfil. Policy states what must be done, but does not establish
+where it is done or who must demonstrate it.&lt;/p&gt;
+&lt;p&gt;Requirements apply to the system of systems as a whole, but their
+fulfilment depends on deliberately allocated obligations across its
+subsystems. The architecture must establish how those obligations fit
+together.&lt;/p&gt;
+&lt;p&gt;Without explicit interface contracts, there is also no agreed basis for
+verifying the handover. What must the sending system guarantee? What must
+the receiving system check? Which evidence demonstrates that their combined
+behaviour fulfils the requirement? Individual systems may pass their
+assessments while the gaps between them remain both unspecified and untested.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="how-system-architecture-comes-to-the-rescue"&gt;How System Architecture Comes to the Rescue&lt;span class="hx:absolute hx:-mt-20" id="how-system-architecture-comes-to-the-rescue"&gt;&lt;/span&gt;
+&lt;a href="#how-system-architecture-comes-to-the-rescue" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;System architecture starts by defining the system boundary, its
+dependencies and its interactions with other systems and actors. It
+then decomposes the system and allocates requirements deliberately. The
+same discipline applies at each level, from the system of systems down
+to its subsystems, including the people, processes and suppliers needed
+to fulfil the requirements.&lt;/p&gt;
+&lt;p&gt;Interface specifications make the responsibilities at each boundary
+contractual. They define what each side must provide, what it may assume about
+the other and how failures are handled. Security obligations, operational
+ownership and evidence requirements belong alongside protocols and data
+formats. The interface becomes an architectural object to design, maintain
+and verify, not merely a connection to implement.&lt;/p&gt;
+&lt;p&gt;Requirements can then be traced from their source through their allocation
+to the relevant interfaces, verification methods and evidence. Each subsystem
+can be assessed against its own obligations, and handovers can be verified
+against agreed contracts. Requirements concerning the combined behaviour of
+several subsystems must still be verified at the system level. Decomposition
+makes verification manageable; it does not remove responsibility for the whole.&lt;/p&gt;
+&lt;p&gt;Evidence is planned as part of this work. The architecture identifies what
+must be demonstrated, where the evidence is generated, who owns it and how
+it is protected and retained. Verification and audit then have a defined
+chain to follow, rather than one to reconstruct afterwards.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="conclusions"&gt;Conclusions&lt;span class="hx:absolute hx:-mt-20" id="conclusions"&gt;&lt;/span&gt;
+&lt;a href="#conclusions" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;High security and high compliance expose the gap between stating what
+the enterprise must achieve and demonstrating how its requirements are
+fulfilled.&lt;/p&gt;
+&lt;p&gt;Business architecture remains essential. It provides the purpose,
+priorities and organisational context needed to make sensible engineering
+decisions. System architecture brings the discipline to translate those
+decisions into obligations that can be assigned, integrated and verified.&lt;/p&gt;
+&lt;p&gt;Interface specifications belong at the centre of that collaboration.
+Standards and suppliers may define how systems communicate, but the
+organisation must still establish what each side guarantees and how
+those guarantees fulfil the wider requirements. Interfaces must be
+treated as contracts to design and verify.&lt;/p&gt;
+&lt;p&gt;Explicit interface contracts also allow teams to develop and verify
+their own parts independently, with a clear understanding of what
+they must provide and what they can rely on from others.&lt;/p&gt;
+&lt;p&gt;High-assurance organisations need architects who can connect the
+enterprise view with these system-level responsibilities. The
+architecture must show not only that the individual parts meet their
+obligations, but that those obligations fit together to fulfil both
+the business and the security requirements of the whole.&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Andreas Olsson&lt;/em&gt;&lt;/p&gt;</description></item><item><title>How to Best Organise Your Code - Balancing Coupling, Cohesion, and Cognitive Coherence</title><link>https://xop.se/musings-on-architecture/coupling-cohesion-cognitive-coherence/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://xop.se/musings-on-architecture/coupling-cohesion-cognitive-coherence/</guid><description>
+&lt;p&gt;In the realm of system design, the key limitation we face is our human cognitive
+capacity. We have a finite ability to comprehend and manage complexity.&lt;/p&gt;
+&lt;p&gt;To effectively manage complexity, we must organise systems into manageable
+components - be it classes, functions or modules, or larger parts.&lt;/p&gt;
+&lt;p&gt;There are many principles that can help guide how to group these components, but
+in my personal experience I have found two that stand above the rest: coupling and
+cohesion, and cognitive coherence.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Coupling and Cohesion&lt;/strong&gt;: These concepts revolve around the idea of
+modularity. Coupling measures the strength of relationships between
+components, while cohesion quantifies the degree to which elements within a
+component are related or serve a common purpose. These principles help us
+create modular, maintainable systems by balancing interdependence and
+internal consistency.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Cognitive Coherence&lt;/strong&gt;: This concept focuses on communication, both with
+others and with our future selves. Achieving cognitive coherence means
+designing systems that are intuitively understandable. It involves ensuring that
+the structure and organisation of the software align with our cognitive
+processes, facilitating comprehension and decision-making.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Both coupling and cohesion, and conceptual coherence are vital principles in
+software design, guiding the creation of modular, maintainable, and understandable
+systems.&lt;/p&gt;
+&lt;p&gt;But what if there is a conflict? If these principles pull in different directions?&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Conflict between Cohesion and Conceptual Coherence&lt;/strong&gt;: Sometimes,
+improving conceptual coherence may necessitate sacrificing cohesion. For
+example, consider the standard library header file math.h. While it provides a
+diverse range of mathematical functions, its cohesion may suffer due to the
+broad scope of functionality it encompasses. However, sacrificing cohesion in
+favour of improved conceptual coherence can still be justified if it enhances
+overall system understanding and usability.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;High Coupling and Conceptual Model Mismatch&lt;/strong&gt;: High coupling can
+indicate a mismatch between the conceptual model and the system&amp;rsquo;s
+requirements. In my personal experience, encountering high coupling has
+often been a sign that my conceptual model was flawed. For instance, when
+designing a complex system, if the components exhibit excessive
+interdependencies, it may be time to reassess the underlying conceptual
+model to better align with the system&amp;rsquo;s needs.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;While there may be instances where one must be prioritised over another, I strongly
+believe we can, and should, use both these principles and create systems that are
+not only modular and maintainable but also conceptually coherent and intuitively
+understandable.&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Andreas Olsson&lt;/em&gt;&lt;/p&gt;</description></item></channel></rss>

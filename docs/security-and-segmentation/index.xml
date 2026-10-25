@@ -1,0 +1,993 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>XOP.SE – Security and Segmentation</title><link>https://xop.se/security-and-segmentation/</link><description>Recent content in Security and Segmentation on XOP.SE</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><atom:link href="https://xop.se/security-and-segmentation/index.xml" rel="self" type="application/rss+xml"/><item><title>Policy-based Micro-segmentation on pfSense</title><link>https://xop.se/security-and-segmentation/micro-segmentation-on-pfsense/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://xop.se/security-and-segmentation/micro-segmentation-on-pfsense/</guid><description>
+&lt;p&gt;&lt;em&gt;Sometimes we want to play with things without risking our entire setup.
+Micro-segmentation reduces the blast radius.
+But I struggled to find a spolution that made policy-first segmentation
+straightforward across wired devices, Wi-Fi, and VMs.
+I went with pfSense. It has the building blocks.
+The challenge is putting them together while keeping the policy manageable.
+Here is how I made it work.&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;So I unboxed my new router and got to work. How hard could it be?&lt;/p&gt;
+&lt;p&gt;Turns out pfSense had another point of view. And that we must think very
+carefully about the trinity of &lt;strong&gt;Identity&lt;/strong&gt;, &lt;strong&gt;Policy&lt;/strong&gt;, and &lt;strong&gt;Topology&lt;/strong&gt;.
+Because pfSense will happily gravitate to a topology first approach.&lt;/p&gt;
+&lt;p&gt;&lt;img src="https://xop.se/security-and-segmentation/micro-segmentation-on-pfsense/mono-how_pfsense_feels.png" alt="How pfSense micro-segmentation feels" loading="lazy" /&gt;&lt;/p&gt;
+&lt;h2 data-hextra-search-id="my-setup"&gt;My setup&lt;span class="hx:absolute hx:-mt-20" id="my-setup"&gt;&lt;/span&gt;
+&lt;a href="#my-setup" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;Router: Netgate 6100 (pfSense+)&lt;/li&gt;
+&lt;li&gt;WiFi: Ubiquiti wireless access point&lt;/li&gt;
+&lt;li&gt;NAS: Synology (running a handful of Virtual Machines)&lt;/li&gt;
+&lt;li&gt;Half a dozen physical computers (many over Wi-Fi)&lt;/li&gt;
+&lt;li&gt;Local AI server&lt;/li&gt;
+&lt;li&gt;A legacy music system using UPnP&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Note that I &lt;strong&gt;do not use a switch&lt;/strong&gt;. This is what makes micro-segmentation
+possible without having to configure VLANs for everything. More on this later.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="the-design"&gt;The Design&lt;span class="hx:absolute hx:-mt-20" id="the-design"&gt;&lt;/span&gt;
+&lt;a href="#the-design" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;h3 data-hextra-search-id="identity"&gt;Identity&lt;span class="hx:absolute hx:-mt-20" id="identity"&gt;&lt;/span&gt;
+&lt;a href="#identity" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;For the purpose of this article, &lt;strong&gt;identity&lt;/strong&gt; means an IPv4 address
+used in policy, associated with a device through a static DHCP mapping.&lt;/p&gt;
+&lt;p&gt;On each client-facing interface, the DHCP server of the router maps the
+device’s MAC address to its intended IP address.
+The same approach is used for physical as well as virtual interfaces
+(VLANs).
+Note that this provides consistent addressing, but not authentication.&lt;/p&gt;
+&lt;p&gt;To protect against impersonation, we must use topology (i.e. which devices
+connect through which interfaces) and firewall rules.&lt;/p&gt;
+&lt;h3 data-hextra-search-id="policy"&gt;Policy&lt;span class="hx:absolute hx:-mt-20" id="policy"&gt;&lt;/span&gt;
+&lt;a href="#policy" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Policy membership is implemented with nested aliases on three levels:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Device&lt;/li&gt;
+&lt;li&gt;Group&lt;/li&gt;
+&lt;li&gt;Policy&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Where the policy level is used in the firewall rules. This makes the
+rules readable and easy to understand.&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Alias name&lt;/th&gt;
+&lt;th&gt;Values&lt;/th&gt;
+&lt;th&gt;Description&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;DEV_NAS&lt;/td&gt;
+&lt;td&gt;192.168.1.10&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;DEV_MUSIC_PLAYER&lt;/td&gt;
+&lt;td&gt;192.168.1.20&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;DEV_IPHONE_1&lt;/td&gt;
+&lt;td&gt;192.168.1.30&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;DEV_IPHONE_2&lt;/td&gt;
+&lt;td&gt;192.168.10.40&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;DEV_PC_NAME1&lt;/td&gt;
+&lt;td&gt;192.168.2.50&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;DEV_VM_SYSLOG&lt;/td&gt;
+&lt;td&gt;192.168.20.60&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;DEV_VM_SIEM&lt;/td&gt;
+&lt;td&gt;192.168.20.70&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;GRP_PHONES&lt;/td&gt;
+&lt;td&gt;DEV_IPHONE_1, DEV_IPHONE_2&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;POL_INTERNET&lt;/td&gt;
+&lt;td&gt;GRP_PHONES, DEV_PC_NAME1&lt;/td&gt;
+&lt;td&gt;Allow unlimited access to the internet&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;POL_MUSIC_SYSTEM&lt;/td&gt;
+&lt;td&gt;DEV_NAS, DEV_MUSIC_PLAYER, DEV_IPHONE_1&lt;/td&gt;
+&lt;td&gt;Allowed to engage in music playback&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;POL_SYSLOG&lt;/td&gt;
+&lt;td&gt;DEV_NAS, DEV_PC_NAME1 &amp;hellip;&lt;/td&gt;
+&lt;td&gt;Allowed to send syslog&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;POL_UPDATE&lt;/td&gt;
+&lt;td&gt;DEV_NAS, DEV_VM_SYSLOG, DEV_VM_SIEM&lt;/td&gt;
+&lt;td&gt;Allow limited access to internet for update only. Limited ports and IP addresses&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;A few notes:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;A policy alias can contain both groups and individual devices&lt;/li&gt;
+&lt;li&gt;All device networks use /24 prefixes, so the first three octets identify the subnet&lt;/li&gt;
+&lt;li&gt;If the third octet of the IP address is single digit (192.168.2.x) it indicates a
+physical interface while a double digit (192.168.20.x) indicates a VLAN&lt;/li&gt;
+&lt;li&gt;Using distinct host ID across different subnets helps if topology needs refactoring&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;In the firewall, policy is implemented as a set of allow (pass) rules between two sets
+of security rules (block).&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;/th&gt;
+&lt;th&gt;Inter- faces&lt;/th&gt;
+&lt;th&gt;Protocol&lt;/th&gt;
+&lt;th&gt;Source&lt;/th&gt;
+&lt;th&gt;Destination&lt;/th&gt;
+&lt;th&gt;Port&lt;/th&gt;
+&lt;th&gt;Description&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Block&lt;/td&gt;
+&lt;td&gt;&amp;hellip;&lt;/td&gt;
+&lt;td&gt;&amp;hellip;&lt;/td&gt;
+&lt;td&gt;&amp;hellip;&lt;/td&gt;
+&lt;td&gt;&amp;hellip;&lt;/td&gt;
+&lt;td&gt;&amp;hellip;&lt;/td&gt;
+&lt;td&gt;Rules for security (discussed later)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Pass&lt;/td&gt;
+&lt;td&gt;Any&lt;/td&gt;
+&lt;td&gt;IPv4 TCP / UDP&lt;/td&gt;
+&lt;td&gt;HOME_SUBNETS&lt;/td&gt;
+&lt;td&gt;This firewall (self)&lt;/td&gt;
+&lt;td&gt;53&lt;/td&gt;
+&lt;td&gt;Allow DNS&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Pass&lt;/td&gt;
+&lt;td&gt;Any&lt;/td&gt;
+&lt;td&gt;IPv4 UDP&lt;/td&gt;
+&lt;td&gt;HOME_SUBNETS&lt;/td&gt;
+&lt;td&gt;This firewall (self)&lt;/td&gt;
+&lt;td&gt;123&lt;/td&gt;
+&lt;td&gt;Allowed NTP&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Pass&lt;/td&gt;
+&lt;td&gt;Any&lt;/td&gt;
+&lt;td&gt;IPv4 UDP&lt;/td&gt;
+&lt;td&gt;POL_SYSLOG&lt;/td&gt;
+&lt;td&gt;DEV_VM_SYSLOG&lt;/td&gt;
+&lt;td&gt;514&lt;/td&gt;
+&lt;td&gt;Devices allowed to send syslog&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Pass&lt;/td&gt;
+&lt;td&gt;Any&lt;/td&gt;
+&lt;td&gt;IPv4 TCP / UDP&lt;/td&gt;
+&lt;td&gt;POL_MUSIC_ SYSTEM&lt;/td&gt;
+&lt;td&gt;POL_MUSIC_ SYSTEM&lt;/td&gt;
+&lt;td&gt;MUSIC_CTRL&lt;/td&gt;
+&lt;td&gt;Allowed to engage in music playback&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Pass&lt;/td&gt;
+&lt;td&gt;Any&lt;/td&gt;
+&lt;td&gt;IPv4 TCP / UDP&lt;/td&gt;
+&lt;td&gt;POL_UPDATE&lt;/td&gt;
+&lt;td&gt;UPDATE_DEST&lt;/td&gt;
+&lt;td&gt;123, 443&lt;/td&gt;
+&lt;td&gt;Allow limited internet access for update&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Pass&lt;/td&gt;
+&lt;td&gt;Any&lt;/td&gt;
+&lt;td&gt;IPv4 TCP / UDP&lt;/td&gt;
+&lt;td&gt;POL_INTERNET&lt;/td&gt;
+&lt;td&gt;!RFC1918_NETS&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;Allow full internet access&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Block&lt;/td&gt;
+&lt;td&gt;&amp;hellip;&lt;/td&gt;
+&lt;td&gt;&amp;hellip;&lt;/td&gt;
+&lt;td&gt;&amp;hellip;&lt;/td&gt;
+&lt;td&gt;&amp;hellip;&lt;/td&gt;
+&lt;td&gt;&amp;hellip;&lt;/td&gt;
+&lt;td&gt;Rules for security (discussed later)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;In my home setup I end up with less than 20 rules in the allow (pass) section.
+More importantly, the complete communication policy still fits on a single page.
+I can read it, understand it, and see the overall design.&lt;/p&gt;
+&lt;h3 data-hextra-search-id="topology"&gt;Topology&lt;span class="hx:absolute hx:-mt-20" id="topology"&gt;&lt;/span&gt;
+&lt;a href="#topology" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;The topology must support both identity and policy. For this, two
+things are required:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Devices that need to be separated from each other must be
+placed on different routed interfaces or VLANs (to enforce identity)&lt;/li&gt;
+&lt;li&gt;Traffic between devices that needs to be separated must cross
+the firewall (to enforce policy)&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Fortunately, for separate routed interfaces and VLANs, 1) also
+gives us 2): traffic between them must cross pfSense.&lt;/p&gt;
+&lt;p&gt;In my setup there are four distinct scenarios:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Physical devices that connect directly to the router. One device for one interface.&lt;/li&gt;
+&lt;li&gt;Virtual machines that connect through VLANs. Here I use the virtual switch
+in the NAS to configure VLAN tags for the VMs.&lt;/li&gt;
+&lt;li&gt;The Wi-Fi access point is configured with different virtual
+access points where each SSID is mapped to a different VLAN.&lt;/li&gt;
+&lt;li&gt;For the legacy music system I use a bridge across a number of
+interfaces. The bridge forms one logical Layer-2 segment, acting
+much like a switch. Traffic can still be filtered by pfSense,
+but devices within the bridge no longer get strong identity
+separation from topology.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Note that not all VMs get an individual VLAN. For example the
+syslog collector and Elastic server (a simple SIEM) live on the
+same VLAN as they are both part of the same function. This is why
+there is no firewall rule between the collector and the SIEM: the
+communication between them stays in the virtual switch and is not
+subject to the router&amp;rsquo;s firewall.&lt;/p&gt;
+&lt;p&gt;Effectively, I trust these three components to preserve the segmentation:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;pfSense, for routing and firewall enforcement&lt;/li&gt;
+&lt;li&gt;the NAS virtual switch, for VM VLAN assignment&lt;/li&gt;
+&lt;li&gt;the Wi-Fi AP, for wireless VLAN assignment&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Plus the computer I use to administer the other three.&lt;/p&gt;
+&lt;p&gt;A compromise or misconfiguration of any of these could weaken or
+bypass the segmentation.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="why-it-works-and-what-must-be-true"&gt;Why it works and what must be true&lt;span class="hx:absolute hx:-mt-20" id="why-it-works-and-what-must-be-true"&gt;&lt;/span&gt;
+&lt;a href="#why-it-works-and-what-must-be-true" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;There are a number of things that must be configured correctly for the
+design to work as intended. Most of these are expressed in the firewall
+rules, either in the top or bottom set of security rules.&lt;/p&gt;
+&lt;h3 data-hextra-search-id="using-floating-rules"&gt;Using Floating Rules&lt;span class="hx:absolute hx:-mt-20" id="using-floating-rules"&gt;&lt;/span&gt;
+&lt;a href="#using-floating-rules" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;The design uses floating rules exclusively. This keeps the complete
+ruleset on a single page, which makes it easier to review as one
+policy. To make evaluation predictable, all rules are defined as:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Inbound&lt;/li&gt;
+&lt;li&gt;Quick&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 data-hextra-search-id="security-rules---top-set"&gt;Security Rules - Top set&lt;span class="hx:absolute hx:-mt-20" id="security-rules---top-set"&gt;&lt;/span&gt;
+&lt;a href="#security-rules---top-set" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Before evaluating the communication policy, I use a small set of
+security rules to establish the assumptions the design depends on.
+These rules are placed above the policy rules.&lt;/p&gt;
+&lt;h4 data-hextra-search-id="no-ipv6"&gt;No IPv6&lt;span class="hx:absolute hx:-mt-20" id="no-ipv6"&gt;&lt;/span&gt;
+&lt;a href="#no-ipv6" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h4&gt;&lt;p&gt;The design is based on IPv4. Rather than accidentally leaving
+an unsegmented IPv6 path, I disable the &lt;strong&gt;allow IPv6&lt;/strong&gt; option
+under System → Advanced → Networking. I also add an explicit
+rule to clarify intent and reduce cognitive load for myself.&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;/th&gt;
+&lt;th&gt;Inter- faces&lt;/th&gt;
+&lt;th&gt;Protocol&lt;/th&gt;
+&lt;th&gt;Source&lt;/th&gt;
+&lt;th&gt;Destination&lt;/th&gt;
+&lt;th&gt;Port&lt;/th&gt;
+&lt;th&gt;Description&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Block&lt;/td&gt;
+&lt;td&gt;Any&lt;/td&gt;
+&lt;td&gt;IPv6&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;Block anything IPv6&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h4 data-hextra-search-id="explicitly-block-unsolicited-inbound-traffic-from-wan"&gt;Explicitly block unsolicited inbound traffic from WAN&lt;span class="hx:absolute hx:-mt-20" id="explicitly-block-unsolicited-inbound-traffic-from-wan"&gt;&lt;/span&gt;
+&lt;a href="#explicitly-block-unsolicited-inbound-traffic-from-wan" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h4&gt;&lt;p&gt;Even though pfSense blocks inbound WAN traffic by default, I
+add an explicit rule - again to clarify intent and reduce my
+cognitive load.&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;/th&gt;
+&lt;th&gt;Inter- faces&lt;/th&gt;
+&lt;th&gt;Protocol&lt;/th&gt;
+&lt;th&gt;Source&lt;/th&gt;
+&lt;th&gt;Destination&lt;/th&gt;
+&lt;th&gt;Port&lt;/th&gt;
+&lt;th&gt;Description&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Block&lt;/td&gt;
+&lt;td&gt;WAN&lt;/td&gt;
+&lt;td&gt;IPv4&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;Block anything initiating from WAN&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h4 data-hextra-search-id="protect-against-spoofing-of-ip-addresses-across-subnets"&gt;Protect against spoofing of IP addresses across subnets&lt;span class="hx:absolute hx:-mt-20" id="protect-against-spoofing-of-ip-addresses-across-subnets"&gt;&lt;/span&gt;
+&lt;a href="#protect-against-spoofing-of-ip-addresses-across-subnets" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h4&gt;&lt;p&gt;To support micro-segmentation we need a sufficiently trustworthy
+identity, because if a device can impersonate another identity
+it may inherit that device’s privileges.&lt;/p&gt;
+&lt;p&gt;A device can choose its own MAC address and source IP address.
+The design therefore cannot trust the address merely because
+DHCP assigned it. For each routed client interface, I explicitly
+block packets whose source address does not belong to the
+subnet permitted on that interface.&lt;/p&gt;
+&lt;p&gt;This effectively locks the device to the address range permitted
+on its interface. If that interface serves only one device, the
+topology gives us a much stronger identity boundary.&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;/th&gt;
+&lt;th&gt;Inter- faces&lt;/th&gt;
+&lt;th&gt;Protocol&lt;/th&gt;
+&lt;th&gt;Source&lt;/th&gt;
+&lt;th&gt;Destination&lt;/th&gt;
+&lt;th&gt;Port&lt;/th&gt;
+&lt;th&gt;Description&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Block&lt;/td&gt;
+&lt;td&gt;LAN1&lt;/td&gt;
+&lt;td&gt;IPv4&lt;/td&gt;
+&lt;td&gt;!LAN1 subnets&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;Anti spoofing&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Block&lt;/td&gt;
+&lt;td&gt;LAN2&lt;/td&gt;
+&lt;td&gt;IPv4&lt;/td&gt;
+&lt;td&gt;!LAN2 subnets&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;Anti spoofing&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Block&lt;/td&gt;
+&lt;td&gt;LAN3&lt;/td&gt;
+&lt;td&gt;IPv4&lt;/td&gt;
+&lt;td&gt;!LAN3 subnets&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;Anti spoofing&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Block&lt;/td&gt;
+&lt;td&gt;VLAN10&lt;/td&gt;
+&lt;td&gt;IPv4&lt;/td&gt;
+&lt;td&gt;!VLAN10 subnets&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;Anti spoofing&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Block&lt;/td&gt;
+&lt;td&gt;VLAN20&lt;/td&gt;
+&lt;td&gt;IPv4&lt;/td&gt;
+&lt;td&gt;!VLAN20 subnets&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;Anti spoofing&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;Note that this restricts devices to their assigned subnets,
+not to individual DHCP addresses. Addresses within the same
+subnet must therefore be considered interchangeable from a
+security perspective.&lt;/p&gt;
+&lt;p&gt;These rules should have logging enabled. A match indicates
+either a misconfiguration or a possible attempt at IP spoofing.
+Both are worth investigating.&lt;/p&gt;
+&lt;p&gt;Unfortunately, this adds some unavoidable topology-specific
+bulk to the top of the ruleset. The important part is that it
+remains isolated from the policy rules below, so the policy
+itself stays readable.&lt;/p&gt;
+&lt;p&gt;When adding a new interface, remember to add its source-address
+restriction before enabling the corresponding policy permissions.&lt;/p&gt;
+&lt;h4 data-hextra-search-id="explicitly-enable-management"&gt;Explicitly enable management&lt;span class="hx:absolute hx:-mt-20" id="explicitly-enable-management"&gt;&lt;/span&gt;
+&lt;a href="#explicitly-enable-management" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h4&gt;&lt;p&gt;Managing should only be allowed through dedicated
+interfaces, to reduce the risk of a compromise.&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;/th&gt;
+&lt;th&gt;Inter- faces&lt;/th&gt;
+&lt;th&gt;Protocol&lt;/th&gt;
+&lt;th&gt;Source&lt;/th&gt;
+&lt;th&gt;Destination&lt;/th&gt;
+&lt;th&gt;Port&lt;/th&gt;
+&lt;th&gt;Description&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Pass&lt;/td&gt;
+&lt;td&gt;LAN1&lt;/td&gt;
+&lt;td&gt;IPv4&lt;/td&gt;
+&lt;td&gt;POL_MGMT&lt;/td&gt;
+&lt;td&gt;This Firewall (self)&lt;/td&gt;
+&lt;td&gt;MGMT_ ROUTER&lt;/td&gt;
+&lt;td&gt;Allow management of pfSense from only this interface&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Pass&lt;/td&gt;
+&lt;td&gt;LAN1&lt;/td&gt;
+&lt;td&gt;IPv4&lt;/td&gt;
+&lt;td&gt;POL_MGMT&lt;/td&gt;
+&lt;td&gt;DEV_NAS&lt;/td&gt;
+&lt;td&gt;MGMT_ NAS&lt;/td&gt;
+&lt;td&gt;Allow management of NAS from only this interface&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Block&lt;/td&gt;
+&lt;td&gt;Any&lt;/td&gt;
+&lt;td&gt;IPv4 TCP / UDP&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;This Firewall (self)&lt;/td&gt;
+&lt;td&gt;MGMT_ ROUTER&lt;/td&gt;
+&lt;td&gt;Prevent re-enabling mgmt below&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Block&lt;/td&gt;
+&lt;td&gt;Any&lt;/td&gt;
+&lt;td&gt;IPv4 TCP / UDP&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;DEV_NAS&lt;/td&gt;
+&lt;td&gt;MGMT_ NAS&lt;/td&gt;
+&lt;td&gt;Prevent re-enabling mgmt below&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;My personal preference is to disable the anti-lockout option in
+pfSense and have an explicit rule, leaving one place to look.&lt;/p&gt;
+&lt;h3 data-hextra-search-id="security-rules---bottom-set"&gt;Security Rules - Bottom set&lt;span class="hx:absolute hx:-mt-20" id="security-rules---bottom-set"&gt;&lt;/span&gt;
+&lt;a href="#security-rules---bottom-set" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;The bottom security rule set has one main purpose: block
+everything not explicitly allowed by the policy rules above.&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;/th&gt;
+&lt;th&gt;Inter- faces&lt;/th&gt;
+&lt;th&gt;Protocol&lt;/th&gt;
+&lt;th&gt;Source&lt;/th&gt;
+&lt;th&gt;Destination&lt;/th&gt;
+&lt;th&gt;Port&lt;/th&gt;
+&lt;th&gt;Description&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Block&lt;/td&gt;
+&lt;td&gt;Any&lt;/td&gt;
+&lt;td&gt;IPv4&lt;/td&gt;
+&lt;td&gt;POL_NO_LOGGING_ ON_BLOCK&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;Silence chatty logs&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Block&lt;/td&gt;
+&lt;td&gt;Any&lt;/td&gt;
+&lt;td&gt;IPv4&lt;/td&gt;
+&lt;td&gt;!127.0.0.1&lt;/td&gt;
+&lt;td&gt;!127.0.0.1&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;Block (and log) everything not explicitly allowed above&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;The first rule suppresses logging for known noisy traffic that
+is already intentionally blocked.&lt;/p&gt;
+&lt;p&gt;Logging should be enabled on the final catch-all rule. Any match
+means traffic occurred that was not accounted for by the policy
+rules above. These logs are useful both during tuning and for
+later monitoring.&lt;/p&gt;
+&lt;h4 data-hextra-search-id="note-do-not-accidentally-block-pfsense-itself"&gt;Note: do not accidentally block pfSense itself&lt;span class="hx:absolute hx:-mt-20" id="note-do-not-accidentally-block-pfsense-itself"&gt;&lt;/span&gt;
+&lt;a href="#note-do-not-accidentally-block-pfsense-itself" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h4&gt;&lt;p&gt;There is one wrinkle when using floating rules on Any: Any also
+includes the loopback interface (lo0). pfSense uses loopback
+internally; for example, by default the firewall itself uses
+the DNS resolver at 127.0.0.1. Although pfSense generates rules
+to allow loopback traffic, these IPv4 rules are not quick, so a
+later user-defined quick catch-all block can override them. The
+catch-all policy block should therefore either exclude loopback
+traffic or, preferably, only apply to the network interfaces
+covered by the policy.&lt;/p&gt;
+&lt;p&gt;In this example I have baked the necessary exception for loopback
+into the blocking rule itself. This is more permissive than strictly
+necessary. On the other hand, it saves screen space and is easy to
+live with, as new interfaces are automatically included in the
+catch-all rule.&lt;/p&gt;
+&lt;h3 data-hextra-search-id="home_subnets-and-rfc1918_nets"&gt;HOME_SUBNETS and RFC1918_NETS&lt;span class="hx:absolute hx:-mt-20" id="home_subnets-and-rfc1918_nets"&gt;&lt;/span&gt;
+&lt;a href="#home_subnets-and-rfc1918_nets" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;HOME_SUBNETS contains the subnets assigned to my internal
+interfaces, whereas RFC1918_NETS contains all private IPv4
+address ranges.&lt;/p&gt;
+&lt;p&gt;I define the alias RFC1918_NETS as:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;192.168.0.0 / 16&lt;/li&gt;
+&lt;li&gt;172.16.0.0 / 12&lt;/li&gt;
+&lt;li&gt;10.0.0.0 / 8&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;These are the private IPv4 address ranges (RFC 1918). By
+excluding RFC1918_NETS as a destination in the Internet access
+rules, I prevent devices from using those permissions to access
+other private networks, including networks outside my own setup.&lt;/p&gt;
+&lt;p&gt;Note that this does not strictly limit traffic to the public
+Internet; other reserved address ranges and the firewall&amp;rsquo;s own
+addresses may need separate consideration.&lt;/p&gt;
+&lt;h3 data-hextra-search-id="the-bridge-and-legacy-music-system"&gt;The Bridge and legacy music system&lt;span class="hx:absolute hx:-mt-20" id="the-bridge-and-legacy-music-system"&gt;&lt;/span&gt;
+&lt;a href="#the-bridge-and-legacy-music-system" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;The bridge acts much like a switch with several interfaces for the
+same subnet.&lt;/p&gt;
+&lt;p&gt;For this design, filtering is performed on the logical bridge
+interface rather than on its individual member interfaces. This
+requires the following two tunables:&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Tunable name&lt;/th&gt;
+&lt;th&gt;Description&lt;/th&gt;
+&lt;th&gt;Value&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;net.link.bridge.pfil_member&lt;/td&gt;
+&lt;td&gt;Packet filter on the member interface&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;net.link.bridge.pfil_bridge&lt;/td&gt;
+&lt;td&gt;Packet filter on the bridge interface&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;Devices sharing the bridge can impersonate each other&amp;rsquo;s
+IP addresses. However, firewall filtering still limits which services
+(ports) can be reached from within the subnet of the bridge.
+In particular, access to the NAS management interface on ports 5000–5001
+is not permitted, and management is done from an interface (LAN1)
+outside the bridge itself.&lt;/p&gt;
+&lt;p&gt;The reason for the bridge is to cater for a legacy music
+system that uses UPnP.&lt;/p&gt;
+&lt;p&gt;It is important to distinguish between UPnP discovery and control, used by my
+music system, and UPnP IGD/PCP, which can allow devices to request dynamic port
+mappings on the router. The latter is known for its security issues and I recommend
+to keep it disabled.&lt;/p&gt;
+&lt;p&gt;Also, to keep the rule set manageable I include 239.255.255.250 in POL_MUSIC_SYSTEM
+and 1900 as well as 80 and 49152:65535 in the MUSIC_CTRL port alias. This makes the
+rule less restrictive than strictly necessary and leaves other services within that
+range reachable. But I consider these devices reasonably trustworthy. And for me, the
+additional risk is acceptable.&lt;/p&gt;
+&lt;h3 data-hextra-search-id="firewall-states"&gt;Firewall States&lt;span class="hx:absolute hx:-mt-20" id="firewall-states"&gt;&lt;/span&gt;
+&lt;a href="#firewall-states" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;Since the design relies on interface boundaries to constrain identity,
+firewall states should also respect those boundaries. I use interface-bound
+states rather than floating states, so packets matching an existing connection
+cannot simply arrive through another interface.&lt;/p&gt;
+&lt;p&gt;Verify your setting of the State Policy option under System &amp;gt; Advanced
+on the Firewall &amp;amp; NAT tab.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="completing-the-firewall-rules"&gt;Completing the firewall rules&lt;span class="hx:absolute hx:-mt-20" id="completing-the-firewall-rules"&gt;&lt;/span&gt;
+&lt;a href="#completing-the-firewall-rules" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;For the example given here, the rule set becomes:&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;/th&gt;
+&lt;th&gt;Inter- faces&lt;/th&gt;
+&lt;th&gt;Protocol&lt;/th&gt;
+&lt;th&gt;Source&lt;/th&gt;
+&lt;th&gt;Destination&lt;/th&gt;
+&lt;th&gt;Port&lt;/th&gt;
+&lt;th&gt;Description&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Block&lt;/td&gt;
+&lt;td&gt;Any&lt;/td&gt;
+&lt;td&gt;IPv6&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;Block anything IPv6&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Block&lt;/td&gt;
+&lt;td&gt;WAN&lt;/td&gt;
+&lt;td&gt;IPv4&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;Block anything initiating from WAN&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Block&lt;/td&gt;
+&lt;td&gt;LAN1&lt;/td&gt;
+&lt;td&gt;IPv4&lt;/td&gt;
+&lt;td&gt;!LAN1 subnets&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;Anti spoofing&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Block&lt;/td&gt;
+&lt;td&gt;LAN2&lt;/td&gt;
+&lt;td&gt;IPv4&lt;/td&gt;
+&lt;td&gt;!LAN2 subnets&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;Anti spoofing&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Block&lt;/td&gt;
+&lt;td&gt;LAN3&lt;/td&gt;
+&lt;td&gt;IPv4&lt;/td&gt;
+&lt;td&gt;!LAN3 subnets&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;Anti spoofing&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Block&lt;/td&gt;
+&lt;td&gt;VLAN10&lt;/td&gt;
+&lt;td&gt;IPv4&lt;/td&gt;
+&lt;td&gt;!VLAN10 subnets&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;Anti spoofing&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Block&lt;/td&gt;
+&lt;td&gt;VLAN20&lt;/td&gt;
+&lt;td&gt;IPv4&lt;/td&gt;
+&lt;td&gt;!VLAN20 subnets&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;Anti spoofing&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Block&lt;/td&gt;
+&lt;td&gt;MUSIC_ BRIDGE&lt;/td&gt;
+&lt;td&gt;IPv4&lt;/td&gt;
+&lt;td&gt;!MUSIC_BRIDGE subnets&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;Anti spoofing&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Pass&lt;/td&gt;
+&lt;td&gt;LAN1&lt;/td&gt;
+&lt;td&gt;IPv4&lt;/td&gt;
+&lt;td&gt;POL_MGMT&lt;/td&gt;
+&lt;td&gt;This Firewall (self)&lt;/td&gt;
+&lt;td&gt;MGMT_ ROUTER&lt;/td&gt;
+&lt;td&gt;Allow management of pfSense from only this interface&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Pass&lt;/td&gt;
+&lt;td&gt;LAN1&lt;/td&gt;
+&lt;td&gt;IPv4&lt;/td&gt;
+&lt;td&gt;POL_MGMT&lt;/td&gt;
+&lt;td&gt;DEV_NAS&lt;/td&gt;
+&lt;td&gt;MGMT_ NAS&lt;/td&gt;
+&lt;td&gt;Allow management of NAS from only this interface&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Block&lt;/td&gt;
+&lt;td&gt;Any&lt;/td&gt;
+&lt;td&gt;IPv4 TCP / UDP&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;This Firewall (self)&lt;/td&gt;
+&lt;td&gt;MGMT_ ROUTER&lt;/td&gt;
+&lt;td&gt;Prevent re-enabling mgmt below&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Block&lt;/td&gt;
+&lt;td&gt;Any&lt;/td&gt;
+&lt;td&gt;IPv4 TCP / UDP&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;DEV_NAS&lt;/td&gt;
+&lt;td&gt;MGMT_ NAS&lt;/td&gt;
+&lt;td&gt;Prevent re-enabling mgmt below&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Pass&lt;/td&gt;
+&lt;td&gt;Any&lt;/td&gt;
+&lt;td&gt;IPv4 TCP / UDP&lt;/td&gt;
+&lt;td&gt;HOME_SUBNETS&lt;/td&gt;
+&lt;td&gt;This firewall (self)&lt;/td&gt;
+&lt;td&gt;53&lt;/td&gt;
+&lt;td&gt;Allow DNS&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Pass&lt;/td&gt;
+&lt;td&gt;Any&lt;/td&gt;
+&lt;td&gt;IPv4 UDP&lt;/td&gt;
+&lt;td&gt;HOME_SUBNETS&lt;/td&gt;
+&lt;td&gt;This firewall (self)&lt;/td&gt;
+&lt;td&gt;123&lt;/td&gt;
+&lt;td&gt;Allowed NTP&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Pass&lt;/td&gt;
+&lt;td&gt;Any&lt;/td&gt;
+&lt;td&gt;IPv4 UDP&lt;/td&gt;
+&lt;td&gt;POL_SYSLOG&lt;/td&gt;
+&lt;td&gt;DEV_VM_SYSLOG&lt;/td&gt;
+&lt;td&gt;514&lt;/td&gt;
+&lt;td&gt;Devices allowed to send syslog&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Pass&lt;/td&gt;
+&lt;td&gt;Any&lt;/td&gt;
+&lt;td&gt;IPv4 TCP / UDP&lt;/td&gt;
+&lt;td&gt;POL_MUSIC_ SYSTEM&lt;/td&gt;
+&lt;td&gt;POL_MUSIC_ SYSTEM&lt;/td&gt;
+&lt;td&gt;MUSIC_ CTRL&lt;/td&gt;
+&lt;td&gt;Allowed to engage in music playback&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Pass&lt;/td&gt;
+&lt;td&gt;Any&lt;/td&gt;
+&lt;td&gt;IPv4 TCP / UDP&lt;/td&gt;
+&lt;td&gt;POL_UPDATE&lt;/td&gt;
+&lt;td&gt;UPDATE_DEST&lt;/td&gt;
+&lt;td&gt;123, 443&lt;/td&gt;
+&lt;td&gt;Allow limited internet access for update&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Pass&lt;/td&gt;
+&lt;td&gt;Any&lt;/td&gt;
+&lt;td&gt;IPv4 TCP / UDP&lt;/td&gt;
+&lt;td&gt;POL_INTERNET&lt;/td&gt;
+&lt;td&gt;!RFC1918_NETS&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;Allow full internet access&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Block&lt;/td&gt;
+&lt;td&gt;Any&lt;/td&gt;
+&lt;td&gt;IPv4&lt;/td&gt;
+&lt;td&gt;POL_NO_LOGGING_ ON_BLOCK&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;Silence chatty logs&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Block&lt;/td&gt;
+&lt;td&gt;Any&lt;/td&gt;
+&lt;td&gt;IPv4&lt;/td&gt;
+&lt;td&gt;!127.0.0.1&lt;/td&gt;
+&lt;td&gt;!127.0.0.1&lt;/td&gt;
+&lt;td&gt;*&lt;/td&gt;
+&lt;td&gt;Block (and log) everything not explicitly allowed above&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;The exact rules will depend on which services your network needs.
+My goal is to keep the ruleset small enough that the complete
+policy can still be understood at a glance. Having all rules in
+one place helps enormously. Since misconfiguration is probably
+one of the more likely ways to weaken the segmentation,
+readability is not just a convenience. It is a security feature.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="verifying-the-design"&gt;Verifying the Design&lt;span class="hx:absolute hx:-mt-20" id="verifying-the-design"&gt;&lt;/span&gt;
+&lt;a href="#verifying-the-design" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;To verify the design, we need to perform a few targeted checks.
+I use two approaches:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Inspecting the rules that pfSense generates for the underlying
+packet filter (PF), particularly those related to NAT.&lt;/li&gt;
+&lt;li&gt;Testing that the anti-spoofing rules behave as intended and
+generate the expected logs.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;This is not a penetration test, nor is the goal to verify the full
+functionality of pfSense. But we do need to establish that the
+assumptions our design depends on hold in practice.&lt;/p&gt;
+&lt;p&gt;Fortunately, this requires only a few targeted tests. For the
+anti-spoofing rules, we can use a single temporary, narrowly
+scoped pass rule to isolate the behaviour we want to verify and
+a simple test program for sending and receiving traffic.&lt;/p&gt;
+&lt;h3 data-hextra-search-id="inspecting-the-generated-rules"&gt;Inspecting the Generated Rules&lt;span class="hx:absolute hx:-mt-20" id="inspecting-the-generated-rules"&gt;&lt;/span&gt;
+&lt;a href="#inspecting-the-generated-rules" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;p&gt;pfSense translates its configuration into rules for the underlying
+packet filter (PF). In addition to our floating rules, pfSense
+generates automatic firewall and NAT rules.&lt;/p&gt;
+&lt;p&gt;Some of these are evaluated before our floating rules, potentially
+allowing traffic that our policy would otherwise block. We therefore
+need to inspect the effective ruleset, paying particular attention
+to NAT and automatically generated permissions.&lt;/p&gt;
+&lt;p&gt;From the pfSense shell, run:&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Command&lt;/th&gt;
+&lt;th&gt;Explanation&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;pfctl -sr&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Show the effective firewall rules&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;pfctl -sn&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Show the effective NAT rules&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;code&gt;pfSsh.php playback pfanchordrill&lt;/code&gt;&lt;/td&gt;
+&lt;td&gt;Show additional rules in PF anchors&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;We are particularly interested in:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Unexpected pass rules: Check for automatically generated permissions
+that could bypass our floating rules.&lt;/li&gt;
+&lt;li&gt;NAT port forwards: Look for unexpected redirects, particularly rdr
+pass, which can permit traffic without a separate firewall pass rule.&lt;/li&gt;
+&lt;li&gt;Dynamic rules: Check for rules created by services or packages,
+such as UPnP IGD/PCP.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Ordinary outbound NAT rules are expected, since they allow our internal
+devices to share the WAN address. They do not, by themselves, grant
+permission to initiate connections.&lt;/p&gt;
+&lt;p&gt;The goal is not to audit every internal rule generated by pfSense,
+but to establish that no unexpected permissions undermine our
+segmentation policy.&lt;/p&gt;
+&lt;p&gt;See also the Netgate documentation: &lt;a
+href="https://docs.netgate.com/pfsense/en/latest/nat/process-order.html?utm_source=chatgpt.com"target="_blank" rel="noopener"&gt;Ordering of NAT and Firewall Processing&lt;/a&gt;&lt;/p&gt;
+&lt;h3 data-hextra-search-id="test-cases-for-anti-spoofing"&gt;Test Cases for Anti-Spoofing&lt;span class="hx:absolute hx:-mt-20" id="test-cases-for-anti-spoofing"&gt;&lt;/span&gt;
+&lt;a href="#test-cases-for-anti-spoofing" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h3&gt;&lt;h4 data-hextra-search-id="preparation"&gt;Preparation&lt;span class="hx:absolute hx:-mt-20" id="preparation"&gt;&lt;/span&gt;
+&lt;a href="#preparation" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h4&gt;&lt;p&gt;The tests require two devices on different network segments: a
+sender and a receiver. A small test program repeatedly sends UDP
+packets to the receiver, for some tests using a spoofed source IP
+address.&lt;/p&gt;
+&lt;p&gt;To isolate the anti-spoofing mechanism from the ordinary
+communication policy, add a temporary floating pass rule
+immediately after the anti-spoofing rules but before the
+normal policy rules:&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Setting&lt;/th&gt;
+&lt;th&gt;Value&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;Action&lt;/td&gt;
+&lt;td&gt;Pass&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Interface&lt;/td&gt;
+&lt;td&gt;Sender&amp;rsquo;s interface&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Direction&lt;/td&gt;
+&lt;td&gt;In&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Quick&lt;/td&gt;
+&lt;td&gt;Enabled&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Protocol&lt;/td&gt;
+&lt;td&gt;IPv4 UDP&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Source&lt;/td&gt;
+&lt;td&gt;Any&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Destination&lt;/td&gt;
+&lt;td&gt;Receiver&amp;rsquo;s IP address&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Destination port&lt;/td&gt;
+&lt;td&gt;39000&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;Logging&lt;/td&gt;
+&lt;td&gt;Disabled&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;This allows test packets to reach the receiver, provided
+they have not already been blocked by the anti-spoofing rules.&lt;/p&gt;
+&lt;p&gt;Before testing:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Make sure logging is enabled on the anti-spoofing rule(s).&lt;/li&gt;
+&lt;li&gt;Compile the test program. It is available as a &lt;a href="spooftest.c" download="spooftest.c"&gt;
+downloadable C source file
+&lt;/a&gt;.
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;cc -std=c11 -O2 -Wall -Wextra -pedantic spooftest.c -o spooftest&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;Start the receiver, listening on UDP port 39000. Ensure its
+local firewall permits the traffic.
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;./spooftest receive&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;Open the pfSense firewall logs and rule counters to observe
+the results.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;The sender, when started, will repeatedly send traffic using a
+new UDP source port for each packet to avoid reusing existing
+firewall states.&lt;/p&gt;
+&lt;p&gt;Make sure the temporary pass rule is reached by the test traffic
+and that no existing firewall states interfere with the tests.&lt;/p&gt;
+&lt;h4 data-hextra-search-id="test-case-1-normal-communication"&gt;Test Case 1: Normal Communication&lt;span class="hx:absolute hx:-mt-20" id="test-case-1-normal-communication"&gt;&lt;/span&gt;
+&lt;a href="#test-case-1-normal-communication" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h4&gt;&lt;h5 data-hextra-search-id="action"&gt;Action&lt;span class="hx:absolute hx:-mt-20" id="action"&gt;&lt;/span&gt;
+&lt;a href="#action" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h5&gt;&lt;p&gt;Using the test program, send UDP packets using the sender&amp;rsquo;s
+assigned IP address.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;./spooftest send &amp;lt;destination-ip&amp;gt;&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 data-hextra-search-id="expected-results"&gt;Expected results&lt;span class="hx:absolute hx:-mt-20" id="expected-results"&gt;&lt;/span&gt;
+&lt;a href="#expected-results" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;Packets arrive at the receiver.&lt;/li&gt;
+&lt;li&gt;The temporary pass rule&amp;rsquo;s counters increase.&lt;/li&gt;
+&lt;li&gt;The anti-spoofing rule&amp;rsquo;s packet counters do not increase due to the test traffic.&lt;/li&gt;
+&lt;li&gt;No firewall logs are generated for the test traffic.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;This also establishes that the test tool and network path work correctly.&lt;/p&gt;
+&lt;h4 data-hextra-search-id="test-case-2-cross-subnet-ip-spoofing"&gt;Test Case 2: Cross-subnet IP spoofing&lt;span class="hx:absolute hx:-mt-20" id="test-case-2-cross-subnet-ip-spoofing"&gt;&lt;/span&gt;
+&lt;a href="#test-case-2-cross-subnet-ip-spoofing" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h4&gt;&lt;h5 data-hextra-search-id="action-1"&gt;Action&lt;span class="hx:absolute hx:-mt-20" id="action-1"&gt;&lt;/span&gt;
+&lt;a href="#action-1" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h5&gt;&lt;p&gt;Using the test program, send UDP packets with a forged source IP.
+Choose an address belonging to another configured client subnet,
+preferably one associated with a device that has additional
+permissions.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;sudo ./spooftest send &amp;lt;destination-ip&amp;gt; &amp;lt;forged-source-ip&amp;gt;&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h5 data-hextra-search-id="expected-results-1"&gt;Expected results&lt;span class="hx:absolute hx:-mt-20" id="expected-results-1"&gt;&lt;/span&gt;
+&lt;a href="#expected-results-1" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h5&gt;&lt;ul&gt;
+&lt;li&gt;No packets arrive at the receiver.&lt;/li&gt;
+&lt;li&gt;The anti-spoofing rule&amp;rsquo;s packet counters increase.&lt;/li&gt;
+&lt;li&gt;Firewall logs show the blocked packets, including their forged source
+addresses and ingress interface.&lt;/li&gt;
+&lt;li&gt;The temporary pass rule&amp;rsquo;s counters do not increase due to the test traffic.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Note that a missing packet at the receiver is not sufficient evidence of
+successful filtering. The anti-spoofing rule&amp;rsquo;s counters and logs must confirm
+that the test traffic was actually blocked. If necessary, use packet capture
+to establish that the packets reached pfSense.&lt;/p&gt;
+&lt;h4 data-hextra-search-id="tear-down"&gt;Tear Down&lt;span class="hx:absolute hx:-mt-20" id="tear-down"&gt;&lt;/span&gt;
+&lt;a href="#tear-down" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h4&gt;&lt;p&gt;After testing, remove the temporary pass rule and clear any states it created.
+Remove test program and binary.&lt;/p&gt;
+&lt;p&gt;Repeat both tests for the different types of interfaces: physical, virtual
+and bridge.&lt;/p&gt;
+&lt;h2 data-hextra-search-id="conclusions"&gt;Conclusions&lt;span class="hx:absolute hx:-mt-20" id="conclusions"&gt;&lt;/span&gt;
+&lt;a href="#conclusions" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;These are the principles that made micro-segmentation on pfSense
+work for me. It takes careful topology design and quite a bit
+of discipline, but once implemented, I find it surprisingly
+easy to live with.&lt;/p&gt;
+&lt;p&gt;The approach has its limitations, particularly regarding device
+identity. But with those limitations understood and the necessary
+safeguards in place, I believe it provides a useful level of
+protection for many home networks and small offices.&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Andreas Olsson&lt;/em&gt;&lt;/p&gt;</description></item></channel></rss>

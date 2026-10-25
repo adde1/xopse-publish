@@ -1,0 +1,214 @@
+
+.clearfix:after {
+    content: " "; /* Older browser do not support empty content */
+    visibility: hidden;
+    display: block;
+    height: 0;
+    clear: both;
+}
+
+#clearfix {
+    content: " "; /* Older browser do not support empty content */
+    visibility: hidden;
+    display: block;
+    height: 0;
+    clear: both;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 20px;
+    background-color: #C791C7;
+    background-image: url("bg.png");
+    background-repeat: repeat-y;
+    background-position: center;
+}
+
+span {
+    font-size: 130%;
+    font-weight: bold;
+}
+
+.emphasis {
+    font-size: 110%;
+}
+
+.section {
+    width: 1100px;
+    padding: 15px;
+    background-color: #F8DDFA;
+    margin-left: auto;
+    margin-right: auto;
+    clear: both;
+}
+
+/* ---- Section 1 ---- */
+
+#section1 {
+    margin-top: 22px;
+    padding-bottom: 8px;
+}
+
+#section1 .grabber {
+    float: left;
+    width: 500px;
+}
+
+#awards {
+    float: left;
+    width: 100px;
+    padding: 0px;
+    padding-right: 47px;
+}
+
+#top_of_the_world {
+    width: 200px;
+    padding: 0px;
+    padding-top: 10px;
+}
+
+#section1 .grabber ul {
+    list-style-image: url('check.png');
+}
+
+#section1 .grabber li {
+    padding-bottom: 10px;
+}
+
+#section1 video {
+    width: 600px;
+}
+
+#section1 .platforms {
+    padding-top: 10px;
+    height: 20px;
+    float: right;
+    padding-right: 37px;
+}
+
+#section1 .platforms img {
+    height: 20px;
+    padding-left: 15px;
+}
+
+#section1 iframe {
+    padding-top: 55px;
+    display: block;
+    padding-left: 37px;
+    padding-right: 37px;
+}
+
+/* ---- Section 2 ---- */
+
+#section2 {
+    margin-top: 25px;
+    margin-bottom: 25px;
+}
+
+#section2 > div {
+    width: 1050px;
+    margin-left: auto;
+    margin-right: auto;
+    position: relative;
+}
+
+#section2 img {
+    width: 100%;
+}
+
+#section2 a {
+    float: left;
+    width: 200px;
+    height: 112px;
+    position: relative;
+    margin: 5px;
+}
+
+#section2 a:hover{
+    opacity: 0.8;
+    cursor: pointer;
+}
+
+#section2 a:focus {
+    outline: none;
+    opacity: 1.0;
+    cursor: default;
+    background: #C88FC8;
+}
+
+#section2 a:focus img {
+    position: fixed;
+    z-index: 25;
+    width: 800px;
+    height: 450px;
+    padding: 25px;
+    padding-bottom: 50px;
+    top: 50%;
+    left: 50%;
+    margin-top: -250px;
+    margin-left: -425px;
+    background: #F8DDFA;
+    box-shadow:0 0 15px 2px #000;
+    -moz-box-shadow:0 0 15px 2px #000;
+    -webkit-box-shadow:0 0 15px 2px #000;
+}
+
+#section2 p {
+    display: None;
+    text-align: center;
+}
+
+#section2 a:focus p {
+    display: block;
+    position: fixed;
+    z-index: 26;
+    width: 800px;
+    margin-top: 240px;
+    margin-left: -400px;
+    top: 50%;
+    left: 50%;
+}
+
+#section2 .close-layer{
+    display: none;
+    position: fixed;
+    z-index: 30;
+    width: 800px;
+    height: 450px;
+    padding: 25px;
+    padding-bottom: 50px;
+    top: 50%;
+    left: 50%;
+    margin-top: -250px;
+    margin-left: -425px;
+    background: transparent;
+    cursor: pointer;
+}
+
+#section2 a:focus~.close-layer {
+    display: block;
+}
+
+/* ---- Section 3 ---- */
+
+#section3 > div {
+    clear: both;
+}
+
+#section3 > div > div {
+    width: 500px;
+    padding: 20px;
+}
+
+#section3 > div > :nth-child(1) {
+    float: left;
+}
+
+#section3 > div > :nth-child(2) {
+    float: right;
+}
+
+#section3 img {
+    float: left;
+    padding-right: 15px;
+}
