@@ -133,14 +133,15 @@ capacity. We have a finite ability to comprehend and manage complexity.&lt;/p&gt
 &lt;p&gt;To effectively manage complexity, we must organise systems into manageable
 components - be it classes, functions or modules, or larger parts.&lt;/p&gt;
 &lt;p&gt;There are many principles that can help guide how to group these components, but
-in my personal experience I have found two that stand above the rest: coupling and
-cohesion, and cognitive coherence.&lt;/p&gt;
+in my personal experience, I have found two that stand above the rest:
+coupling/cohesion and cognitive coherence.&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;
 &lt;p&gt;&lt;strong&gt;Coupling and Cohesion&lt;/strong&gt;: These concepts revolve around the idea of
 modularity. Coupling measures the strength of relationships between
 components, while cohesion quantifies the degree to which elements within a
-component are related or serve a common purpose. These principles help us
+component are related or serve a common purpose. Together, they provide a
+heuristic for grouping code. These principles help us
 create modular, maintainable systems by balancing interdependence and
 internal consistency.&lt;/p&gt;
 &lt;/li&gt;
@@ -152,32 +153,31 @@ the structure and organisation of the software align with our cognitive
 processes, facilitating comprehension and decision-making.&lt;/p&gt;
 &lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;Both coupling and cohesion, and conceptual coherence are vital principles in
+&lt;p&gt;Both coupling/cohesion and cognitive coherence are vital principles in
 software design, guiding the creation of modular, maintainable, and understandable
 systems.&lt;/p&gt;
 &lt;p&gt;But what if there is a conflict? If these principles pull in different directions?&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;
-&lt;p&gt;&lt;strong&gt;Conflict between Cohesion and Conceptual Coherence&lt;/strong&gt;: Sometimes,
-improving conceptual coherence may necessitate sacrificing cohesion. For
-example, consider the standard library header file math.h. While it provides a
+&lt;p&gt;&lt;strong&gt;Conflict between Cohesion and Cognitive Coherence&lt;/strong&gt;: Sometimes,
+improving cognitive coherence may necessitate sacrificing cohesion. For
+example, consider the standard library header file &lt;code&gt;math.h&lt;/code&gt;. While it provides a
 diverse range of mathematical functions, its cohesion may suffer due to the
 broad scope of functionality it encompasses. However, sacrificing cohesion in
-favour of improved conceptual coherence can still be justified if it enhances
+favour of improved cognitive coherence can still be justified if it enhances
 overall system understanding and usability.&lt;/p&gt;
 &lt;/li&gt;
 &lt;li&gt;
 &lt;p&gt;&lt;strong&gt;High Coupling and Conceptual Model Mismatch&lt;/strong&gt;: High coupling can
 indicate a mismatch between the conceptual model and the system&amp;rsquo;s
-requirements. In my personal experience, encountering high coupling has
-often been a sign that my conceptual model was flawed. For instance, when
-designing a complex system, if the components exhibit excessive
-interdependencies, it may be time to reassess the underlying conceptual
-model to better align with the system&amp;rsquo;s needs.&lt;/p&gt;
+requirements.
+In my personal experience, when my conceptual model conflicts with coupling
+and cohesion, it is usually the conceptual model that needs reconsideration.
+After all, cognitive coherence is more subjective, and there may be another
+way of organising the system that satisfies both principles.&lt;/p&gt;
 &lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;While there may be instances where one must be prioritised over another, I strongly
-believe we can, and should, use both these principles and create systems that are
-not only modular and maintainable but also conceptually coherent and intuitively
-understandable.&lt;/p&gt;
+believe we can and should use both these principles to create systems that are
+not only modular and maintainable but also intuitively understandable.&lt;/p&gt;
 &lt;p&gt;&lt;em&gt;Andreas Olsson&lt;/em&gt;&lt;/p&gt;</description></item></channel></rss>
