@@ -137,13 +137,13 @@ in my personal experience, I have found two that stand above the rest:
 coupling/cohesion and cognitive coherence.&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;
-&lt;p&gt;&lt;strong&gt;Coupling and Cohesion&lt;/strong&gt;: These concepts revolve around the idea of
-modularity. Coupling measures the strength of relationships between
-components, while cohesion quantifies the degree to which elements within a
-component are related or serve a common purpose. Together, they provide a
-heuristic for grouping code. These principles help us
-create modular, maintainable systems by balancing interdependence and
-internal consistency.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Coupling and Cohesion&lt;/strong&gt;: Together, they provide a heuristic for grouping
+code: aim for islands with dense internal connections and few bridges between
+them. Coupling measures the strength of relationships between
+components, while cohesion (used here in its structural sense) describes
+how closely the elements within a component are connected.
+These principles help us create modular, maintainable
+systems.&lt;/p&gt;
 &lt;/li&gt;
 &lt;li&gt;
 &lt;p&gt;&lt;strong&gt;Cognitive Coherence&lt;/strong&gt;: This concept focuses on communication, both with
