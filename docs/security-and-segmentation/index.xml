@@ -397,6 +397,10 @@ topology gives us a much stronger identity boundary.&lt;/p&gt;
 &lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
+&lt;p&gt;Unfortunately, this adds some unavoidable topology-specific
+bulk to the top of the ruleset. The important part is that it
+remains isolated from the policy rules below, so the policy
+itself stays readable.&lt;/p&gt;
 &lt;p&gt;Note that this restricts devices to their assigned subnets,
 not to individual DHCP addresses. Addresses within the same
 subnet must therefore be considered interchangeable from a
@@ -404,10 +408,6 @@ security perspective.&lt;/p&gt;
 &lt;p&gt;These rules should have logging enabled. A match indicates
 either a misconfiguration or a possible attempt at IP spoofing.
 Both are worth investigating.&lt;/p&gt;
-&lt;p&gt;Unfortunately, this adds some unavoidable topology-specific
-bulk to the top of the ruleset. The important part is that it
-remains isolated from the policy rules below, so the policy
-itself stays readable.&lt;/p&gt;
 &lt;p&gt;When adding a new interface, remember to add its source-address
 restriction before enabling the corresponding policy permissions.&lt;/p&gt;
 &lt;h4 data-hextra-search-id="explicitly-enable-management"&gt;Explicitly enable management&lt;span class="hx:absolute hx:-mt-20" id="explicitly-enable-management"&gt;&lt;/span&gt;
