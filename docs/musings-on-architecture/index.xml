@@ -78,11 +78,18 @@ where it is done or who must demonstrate it.&lt;/p&gt;
 fulfilment depends on deliberately allocated obligations across its
 subsystems. The architecture must establish how those obligations fit
 together.&lt;/p&gt;
-&lt;p&gt;Without explicit interface contracts, there is also no agreed basis for
+&lt;p&gt;This is a real security problem in a high-security environment. A defender
+must secure the whole attack surface, while the attacker&amp;rsquo;s advantage is that
+a threat actor needs only to find one gap to exploit.&lt;/p&gt;
+&lt;p&gt;Without explicit interface contracts, there is no agreed basis for
 verifying the handover. What must the sending system guarantee? What must
 the receiving system check? Which evidence demonstrates that their combined
 behaviour fulfils the requirement? Individual systems may pass their
 assessments while the gaps between them remain both unspecified and untested.&lt;/p&gt;
+&lt;p&gt;An attacker encounters the technical reality of the system as implemented
+and operated, not the policies and compliance documents intended to govern
+it. Clear responsibility is what translates those intentions into controls
+that are actually implemented, operated and verified.&lt;/p&gt;
 &lt;h2 data-hextra-search-id="how-system-architecture-comes-to-the-rescue"&gt;How System Architecture Comes to the Rescue&lt;span class="hx:absolute hx:-mt-20" id="how-system-architecture-comes-to-the-rescue"&gt;&lt;/span&gt;
 &lt;a href="#how-system-architecture-comes-to-the-rescue" class="subheading-anchor" aria-label="Permalink for this section"&gt;&lt;/a&gt;&lt;/h2&gt;&lt;p&gt;System architecture starts by defining the system boundary, its
 dependencies and its interactions with other systems and actors. It
